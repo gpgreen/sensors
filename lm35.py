@@ -16,8 +16,7 @@ class LM35(object):
         
     def read_sensor(self):
         x = ADC.read(self._pin)
-        volts = x * 1.5
-        self._temp = volts * 100
+        self._temp = x * 1.8 * 100
 
     def temperature(self):
         return self._temp

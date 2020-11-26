@@ -42,11 +42,12 @@ def main(args):
         HOST = intf
         hoststr = intf
     PORT = int(config['udp_port'])
-    print("Sleep interval: {}\nSending to {} on port {}".format(sleepy, hoststr, PORT))
+    print("Sleep interval: {}\nOutput to {}:{}".format(sleepy, hoststr, PORT))
 
     temp = lm35.LM35(config['lm35_pin'])
-    baro = bmp085.BMP085Device(int(config['baro_bus']),
-                               config['baro_xclr_pin'])
+    baro = bmp085.BMP085Device(int(config['bmp085_i2c_bus']),
+                               config['bmp085_xclr_pin'])
+    
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         while True:
             temp.read_sensor()
