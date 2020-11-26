@@ -1,9 +1,8 @@
-# Read/Write a bmp05 barometric sensor
+# Read/Write a bmp085 barometric sensor on i2c
 
 import smbus
 import time
 import struct
-import socket
 import Adafruit_BBIO.GPIO as GPIO
 
 # i2c address
@@ -32,6 +31,9 @@ class BMP085Device:
         
         # read the chip id
         self._chip_id = self._bus.read_byte_data(baro, 0xD0)
+        print("BMP085 Barometric Sensor found on i2c-{} at address {}".format(busno,baro))
+        print("XCLR pin={}".format(self._xclr))
+        print("oversampling:",self._oversampling)
         print("ChipID:0x{:x}".format(self._chip_id))
         # read the version
         version_id = self._bus.read_byte_data(baro, 0xD1)
@@ -41,7 +43,8 @@ class BMP085Device:
         # read calibration parameter information
         data = bytes(self._bus.read_i2c_block_data(baro, 0xaa, 22))
         #print(data,len(data))
-        self._ac1, self._ac2, self._ac3, self._ac4, self._ac5, self._ac6, self._b1, self._b2, self._mb, self._mc, self._md = struct.unpack('>hhhHHHhhhhh', data)
+        self._ac1, self._ac2, self._ac3, self._ac4, self._ac5, self._ac6, \
+          self._b1, self._b2, self._mb, self._mc, self._md = struct.unpack('>hhhHHHhhhhh', data)
         print('calibration parameters')
         print('\tac1:{} ac2:{} ac3:{}'.format(self._ac1,self._ac2,self._ac3))
         print('\tac4:{} ac5:{} ac6:{}'.format(self._ac4,self._ac5,self._ac6))

@@ -1,0 +1,8 @@
+{
+    "udp_host": "",
+    "udp_port": 49898,
+    "sleep_interval": 5,
+    "lm35_pin": "P9_39",
+    "baro_bus": 2,
+    "baro_xclr_pin": "P9_12"
+}

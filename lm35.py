@@ -12,6 +12,7 @@ class LM35(object):
         ADC.setup()
         self._pin = pin
         self._temp = 0
+        print("LM35 Temperature sensor initialized on pin {}".format(self._pin))
         
     def read_sensor(self):
         x = ADC.read(self._pin)
