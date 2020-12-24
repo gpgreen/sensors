@@ -2,7 +2,7 @@
     "udp_host": "127.0.0.1",
     "udp_port": 49898,
     "sleep_interval": 5,
-    "lm35_pin": "P9_39",
-    "bmp085_i2c_bus": 2,
-    "bmp085_xclr_pin": "P9_12"
+    "lm35_pin": 0,
+    "bmp085_i2c_bus": 1,
+    "bmp085_xclr_pin": 18
 }

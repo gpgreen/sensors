@@ -3,22 +3,19 @@
 import smbus
 import time
 import struct
-import Adafruit_BBIO.GPIO as GPIO
+from gpiozero import DigitalOutputDevice
 
 # i2c address
 baro = 0x77
 
 # pin for XCLR
-xclr_pin = "P9_12"
+xclr_pin = 18
 
 class BMP085Device:
 
     def __init__(self, busno, xclr_pin):
-        self._xclr = xclr_pin
-
-        GPIO.setup(self._xclr, GPIO.OUT)
-        GPIO.output(self._xclr, GPIO.HIGH)
-
+        self._xclr = DigitalOutputDevice(xclr_pin, active_high=False)
+        
         self.reset()
         
         self._bus = smbus.SMBus(busno)
@@ -51,9 +48,9 @@ class BMP085Device:
         print('\tmb:{} mc:{} md:{}'.format(self._mb,self._mc,self._md))
 
     def reset(self):
-        GPIO.output(xclr_pin, GPIO.LOW)
+        self._xclr.on()
         time.sleep(0.5)
-        GPIO.output(xclr_pin, GPIO.HIGH)
+        self._xclr.off()
         time.sleep(1)
 
     def read_sensor(self):

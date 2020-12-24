@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #########################################################
-# daemon process to monitor sensors on BBB
+# daemon process to monitor sensors on Boat Computer
 #
 # Requires an environment variable 'SENSOR_MONITOR_CONFIG'
 # to be set with the path to the configuration file
@@ -44,15 +44,15 @@ def main(args):
     PORT = int(config['udp_port'])
     print("Sleep interval: {}\nOutput to {}:{}".format(sleepy, hoststr, PORT))
 
-    temp = lm35.LM35(config['lm35_pin'])
+    #temp = lm35.LM35(config['lm35_pin'])
     baro = bmp085.BMP085Device(int(config['bmp085_i2c_bus']),
-                               config['bmp085_xclr_pin'])
+                               int(config['bmp085_xclr_pin']))
     
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         while True:
-            temp.read_sensor()
+            #temp.read_sensor()
             baro.read_sensor()
-            s.sendto(temp.create_nmea0183_sentence().encode(), (HOST, PORT))
+            #s.sendto(temp.create_nmea0183_sentence().encode(), (HOST, PORT))
             s.sendto(baro.create_nmea0183_sentence().encode(), (HOST, PORT))
             time.sleep(sleepy)
 
