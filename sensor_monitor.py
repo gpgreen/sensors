@@ -44,17 +44,22 @@ def main(args):
     PORT = int(config['udp_port'])
     print("Sleep interval: {}\nOutput to {}:{}".format(sleepy, hoststr, PORT))
 
-    #temp = lm35.LM35(config['lm35_pin'])
-    baro = bmp085.BMP085Device(int(config['bmp085_i2c_bus']),
+    tempdev = lm35.LM35(int(config['lm35_channel']),
+                     int(config['lm35_bus']),
+                     int(config['lm35_device']))
+    tempdev.open()
+    barodev = bmp085.BMP085Device(int(config['bmp085_i2c_bus']),
                                int(config['bmp085_xclr_pin']))
     
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         while True:
-            #temp.read_sensor()
-            baro.read_sensor()
-            #s.sendto(temp.create_nmea0183_sentence().encode(), (HOST, PORT))
-            s.sendto(baro.create_nmea0183_sentence().encode(), (HOST, PORT))
+            tempdev.read_sensor()
+            barodev.read_sensor()
+            s.sendto(tempdev.create_nmea0183_sentence().encode(), (HOST, PORT))
+            s.sendto(barodev.create_nmea0183_sentence().encode(), (HOST, PORT))
             time.sleep(sleepy)
+
+    tempdev.close()
 
 if __name__ == '__main__':
     main(sys.argv)

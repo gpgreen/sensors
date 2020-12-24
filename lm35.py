@@ -1,22 +1,43 @@
 #//////////////////////////////////////
 #	lm35.py
 # 	Reads the analog value of the temperature sensor.
+#   Uses the hat power monitor
 #//////////////////////////////////////
-import Adafruit_BBIO.ADC as ADC
-
-pin = "P9_39"        # light sensor
+import spidev
 
 class LM35(object):
 
-    def __init__(self, pin):
-        ADC.setup()
-        self._pin = pin
+    def __init__(self, channel, bus, device):
+        if not 0 <= channel < 6:
+            raise ValueError('channel must be in range: 0-5')
+        # setup CS
+        if device == 0:
+            pin = 8
+        else:
+            pin = 7
+        self._spi = spidev.SpiDev()
+        self._spi_bus = bus
+        self._spi_dev = device
+        self._channel = channel
+        self._raw = 0
         self._temp = 0
-        print("LM35 Temperature sensor initialized on pin {}".format(self._pin))
+        print("LM35 Temperature sensor initialized on channel {}".format(self._channel))
+
+    def open(self):
+        self._spi.open(self._spi_bus, self._spi_dev)
+        # specify which channel to get
+        self._spi.xfer([0x1, 0x3, 0x00], 100000, 40, 8)
+        
+    def close(self):
+        self._spi.close()
         
     def read_sensor(self):
-        x = ADC.read(self._pin)
-        self._temp = x * 1.8 * 100
+        res = self._spi.xfer(self._send(), 100000, 40, 8)[-2:]
+        self._raw = res[0] + (res[1] << 8)
+        self._temp = self._raw * 1.8 * 100
+
+    def _send(self):
+        return [self._channel + 0x10, 0, 0]
 
     def temperature(self):
         return self._temp
