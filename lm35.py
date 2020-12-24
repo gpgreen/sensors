@@ -26,13 +26,13 @@ class LM35(object):
     def open(self):
         self._spi.open(self._spi_bus, self._spi_dev)
         # specify which channel to get
-        self._spi.xfer([0x1, 0x3, 0x00], 100000, 40, 8)
+        self._spi.xfer([0x1, 0x3, 0x00], 100000, 40)
         
     def close(self):
         self._spi.close()
         
     def read_sensor(self):
-        res = self._spi.xfer(self._send(), 100000, 40, 8)[-2:]
+        res = self._spi.xfer(self._send(), 100000, 40)[-2:]
         self._raw = res[0] + (res[1] << 8)
         self._temp = self._raw * 1.8 * 100
 
