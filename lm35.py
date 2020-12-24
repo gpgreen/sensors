@@ -26,7 +26,7 @@ class LM35(object):
     def open(self):
         self._spi.open(self._spi_bus, self._spi_dev)
         # specify which channel to get
-        self._spi.xfer([0x1, 0x3, 0x00], 100000, 40)
+        self._spi.xfer([0x1, 0x1, 0x00], 100000, 40)
         
     def close(self):
         self._spi.close()
