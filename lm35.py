@@ -26,17 +26,16 @@ class LM35(object):
 
     def open(self):
         self._spi.open(self._spi_bus, self._spi_dev)
+        time.sleep(0.00002)
         # specify which channel to get
         self._spi_write([0x1, 0x3, 0x00])
-        time.sleep(0.001)
         print("channels:", self._spi_write([0x2, 0x0, 0x0])[0])
 
     def close(self):
         self._spi.close()
 
     def read_sensor(self):
-        res = self._spi_write([0x2,0,0])
-        time.sleep(0.00005)
+        self._spi_write([0x2,0,0])
         res = self._spi_write(self._send())
         self._raw = res[0] + (res[1] << 8)
         self._temp = self._raw * 1.8 / 1024.0 * 100
@@ -59,6 +58,5 @@ class LM35(object):
         return nmea_sentence
 
     def _spi_write(self, data):
-        self._spi.xfer(data[:1], 100000)
-        time.sleep(0.00015)
-        return self._spi.xfer(data[1:], 100000)
+        self._spi.xfer(data[:1], 100000, 50)
+        return self._spi.xfer(data[1:], 100000, 10)
