@@ -4,6 +4,7 @@
 #   Uses the hat power monitor
 #//////////////////////////////////////
 import spidev
+import time
 
 class LM35(object):
 
@@ -26,15 +27,20 @@ class LM35(object):
     def open(self):
         self._spi.open(self._spi_bus, self._spi_dev)
         # specify which channel to get
-        self._spi.xfer([0x1, 0x1, 0x00], 100000, 40)
-        
+        self._spi_write([0x1, 0x3, 0x00])
+        time.sleep(0.001)
+        print("channels:", self._spi_write([0x2, 0x0, 0x0])[0])
+
     def close(self):
         self._spi.close()
-        
+
     def read_sensor(self):
-        res = self._spi.xfer(self._send(), 100000, 40)[-2:]
+        res = self._spi_write([0x2,0,0])
+        time.sleep(0.00005)
+        res = self._spi_write(self._send())
         self._raw = res[0] + (res[1] << 8)
-        self._temp = self._raw * 1.8 * 100
+        self._temp = self._raw * 1.8 / 1024.0 * 100
+        #print("raw:", res[0], res[1])
 
     def _send(self):
         return [self._channel + 0x10, 0, 0]
@@ -51,3 +57,8 @@ class LM35(object):
         nmea_sentence = '${}*{:02x}\r\n'.format(nmea_sentence, checksum_value)
         #print(nmea_sentence[:-2])
         return nmea_sentence
+
+    def _spi_write(self, data):
+        self._spi.xfer(data[:1], 100000)
+        time.sleep(0.00015)
+        return self._spi.xfer(data[1:], 100000)
