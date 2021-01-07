@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/pi/sensors/sensor_monitor.py
+ExecStart=/usr/bin/python3 -u /home/pi/sensors/sensor_monitor.py
 Environment="SENSOR_MONITOR_CONFIG=/home/pi/sensors/sensor_monitor.json"
 Restart=on-failure
 StartLimitInterval=10s
