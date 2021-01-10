@@ -3,19 +3,16 @@
 # 	Reads the analog value of the temperature sensor.
 #   Uses the hat power monitor
 #//////////////////////////////////////
-import spidev
 import time
 
-class LM35(object):
+# raspberry pi imports
+import spidev
+
+class LM35:
 
     def __init__(self, channel, bus, device):
         if not 0 <= channel < 6:
             raise ValueError('channel must be in range: 0-5')
-        # setup CS
-        if device == 0:
-            pin = 8
-        else:
-            pin = 7
         self._spi = spidev.SpiDev()
         self._spi_bus = bus
         self._spi_dev = device
@@ -35,7 +32,7 @@ class LM35(object):
         self._spi.close()
 
     def read_sensor(self):
-        self._spi_write([0x2,0,0])
+        self._spi_write([0x2, 0, 0])
         res = self._spi_write(self._send())
         self._raw = res[0] + (res[1] << 8)
         self._temp = self._raw * 1.8 / 1024.0 * 100
@@ -47,12 +44,12 @@ class LM35(object):
     def temperature(self):
         return self._temp
 
-    def create_nmea0183_sentence(self):
-        nmea_sentence = 'WIMTA,{:.1f},C'.format(self._temp)
+    def create_nmea0183_sentence(self, talker_id):
+        nmea_sentence = '{}MTA,{:.1f},C'.format(talker_id, self._temp)
         # compute checksum
         checksum_value = 0
-        for c in nmea_sentence:
-            checksum_value ^= ord(c)
+        for nmea_ch in nmea_sentence:
+            checksum_value ^= ord(nmea_ch)
         nmea_sentence = '${}*{:02x}\r\n'.format(nmea_sentence, checksum_value)
         #print(nmea_sentence[:-2])
         return nmea_sentence

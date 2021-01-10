@@ -12,19 +12,19 @@
 ###########################################################
 import socket
 import time
+import json
+import os
+
 import lm35
 import bmp085
-import json
-import sys
-import os
 
 def read_config_file(fname):
     config = None
-    with open(fname, "rt") as f:
-        config = json.load(f)
+    with open(fname, "rt") as json_file:
+        config = json.load(json_file)
     return config
 
-def main(args):
+def main():
     # get environment variable with config file path
     fname = os.environ['SENSOR_MONITOR_CONFIG']
     print("sensor_monitor.py: using config file at '{}'".format(fname))
@@ -34,32 +34,35 @@ def main(args):
     intf = config['udp_host']
     if intf == '':
         hoststr = 'any'
-        HOST = ''
+        udp_host = ''
     elif intf == 'any':
-        HOST = ''
+        udp_host = ''
         hoststr = intf
     else:
-        HOST = intf
+        udp_host = intf
         hoststr = intf
-    PORT = int(config['udp_port'])
-    print("Sleep interval: {}\nOutput to {}:{}".format(sleepy, hoststr, PORT))
+    udp_port = int(config['udp_port'])
+    print("Sleep interval: {}\nOutput to {}:{}".format(sleepy, hoststr, udp_port))
+    talker_id = config['nmea0183_talker_id']
+    print("NMEA0183 Talker ID:", talker_id)
 
     tempdev = lm35.LM35(int(config['lm35_channel']),
-                     int(config['lm35_bus']),
-                     int(config['lm35_device']))
+                        int(config['lm35_bus']),
+                        int(config['lm35_device']))
     tempdev.open()
     barodev = bmp085.BMP085Device(int(config['bmp085_i2c_bus']),
-                               int(config['bmp085_xclr_pin']))
-    
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                                  int(config['bmp085_xclr_pin']),
+                                  int(config['bmp085_eoc_pin']))
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         while True:
             tempdev.read_sensor()
             barodev.read_sensor()
-            s.sendto(tempdev.create_nmea0183_sentence().encode(), (HOST, PORT))
-            s.sendto(barodev.create_nmea0183_sentence().encode(), (HOST, PORT))
+            sock.sendto(tempdev.create_nmea0183_sentence(talker_id).encode(), (udp_host, udp_port))
+            sock.sendto(barodev.create_nmea0183_sentence(talker_id).encode(), (udp_host, udp_port))
             time.sleep(sleepy)
 
     tempdev.close()
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
