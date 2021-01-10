@@ -33,7 +33,6 @@ class BMP085Device:
         self.reset()
         # EOC is active high, if calculation is done
         self._eoc = DigitalInputDevice(eoc_pin, pull_up=False)
-        self._calib = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self._bus = smbus.SMBus(busno)
         self._oversampling = 2
         self._raw_temp = 0
@@ -53,7 +52,8 @@ class BMP085Device:
         print("Version:{}.{}".format(ml_version, al_version))
         # read calibration parameter information
         data = bytes(self._bus.read_i2c_block_data(BARO, 0xaa, 22))
-        self._calib = struct.unpack('>hhhHHHhhhhh', data)
+        self._calib = list(struct.unpack('>hhhHHHhhhhh', data))
+        self._calib.append(0)
         print('Calibration parameters')
         print('\tac1:{} ac2:{} ac3:{}'.format(self._calib[AC1], self._calib[AC2], self._calib[AC3]))
         print('\tac4:{} ac5:{} ac6:{}'.format(self._calib[AC4], self._calib[AC5], self._calib[AC6]))
