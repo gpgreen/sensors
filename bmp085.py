@@ -33,7 +33,7 @@ class BMP085Device:
         self.reset()
         # EOC is active high, if calculation is done
         self._eoc = DigitalInputDevice(eoc_pin, pull_up=False)
-        self._calib = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self._calib = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self._bus = smbus.SMBus(busno)
         self._oversampling = 2
         self._raw_temp = 0
