@@ -4,9 +4,7 @@ import time
 import struct
 
 # raspberry pi imports
-import smbus
-from gpiozero.pins.pigpio import PiGPIOFactory
-from gpiozero import DigitalOutputDevice, DigitalInputDevice
+import pigpio
 
 # i2c address
 BARO = 0x77
@@ -29,31 +27,35 @@ class BMP085Device:
     """ BMP085 barometric pressure sensor device. """
 
     def __init__(self, busno, xclr_pin, eoc_pin):
-        factory = PiGPIOFactory()
+        self._gpiod = pigpio.pi()
         # XCLR is active low to reset the device
-        self._xclr = DigitalOutputDevice(xclr_pin, active_high=False, pin_factory=factory)
+        self._xclr_pin = xclr_pin
+        self._gpiod.set_mode(self._xclr_pin, pigpio.OUTPUT)
+        self._gpiod.write(self._xclr_pin, 1)
         self.reset()
         # EOC is active high, if calculation is done
-        self._eoc = DigitalInputDevice(eoc_pin, pull_up=False, pin_factory=factory)
-        self._bus = smbus.SMBus(busno)
+        self._eoc_pin = eoc_pin
+        self._gpiod.set_mode(self._eoc_pin, pigpio.INPUT)
+
+        self._bus = self._gpiod.i2c_open(busno, BARO, 0)
         self._oversampling = 2
         self._raw_temp = 0
         self._raw_press = 0
 
         # read the chip id
-        chip_id = self._bus.read_byte_data(BARO, 0xD0)
+        chip_id = self._gpiod.i2c_read_byte_data(self._bus, 0xD0)
         print("BMP085 Barometric Sensor initialized on i2c-{} at address 0x{:02x}".format(
             busno, BARO))
         print("XCLR pin={} EOC pin={}".format(self._xclr, self._eoc))
         print("Oversampling:", self._oversampling)
         print("ChipID:0x{:02x}".format(chip_id))
         # read the version
-        version_id = self._bus.read_byte_data(BARO, 0xD1)
+        version_id = self._gpiod.i2c_read_byte_data(self._bus, 0xD1)
         ml_version = version_id & 0xF
         al_version = (version_id & 0xF0) >> 4
         print("Version:{}.{}".format(ml_version, al_version))
         # read calibration parameter information
-        data = bytes(self._bus.read_i2c_block_data(BARO, 0xaa, 22))
+        data = bytes(self._gpiod.i2c_read_i2c_block_data(self._bus, 0xaa, 22))
         self._calib = list(struct.unpack('>hhhHHHhhhhh', data))
         self._calib.append(0)
         print('Calibration parameters')
@@ -63,9 +65,9 @@ class BMP085Device:
         print('\tmb:{} mc:{} md:{}'.format(self._calib[MB], self._calib[MC], self._calib[MD]))
 
     def reset(self):
-        self._xclr.on()
+        self._gpiod.write(self._xclr_pin, 0)
         time.sleep(0.5)
-        self._xclr.off()
+        self._gpiod.write(self._xclr_pin, 1)
         time.sleep(1)
 
     def read_sensor(self):
@@ -86,7 +88,7 @@ class BMP085Device:
         return nmea_sentence
 
     def read_press(self):
-        self._bus.write_byte_data(BARO, 0xF4, 0x34 + (self._oversampling<<6))
+        self._gpiod.i2c_write_byte(self._bus, 0xF4, 0x34 + (self._oversampling<<6))
         if self._oversampling == 0:
             time.sleep(0.002)
         elif self._oversampling == 1:
@@ -95,16 +97,16 @@ class BMP085Device:
             time.sleep(0.018)
         else:
             time.sleep(0.026)
-        sample = self._bus.read_i2c_block_data(BARO, 0xF6, 3)
+        sample = self._gpiod.i2c_read_i2c_block_data(self._bus, 0xF6, 3)
         #print('sample {:x}{:x}{:x}'.format(sample[0],sample[1],sample[2]))
         self._raw_press = ((sample[0] << 16) + (sample[1] << 8) + sample[2]) \
             >> (8 - self._oversampling)
         #print("raw press:{}".format(self._raw_press))
 
     def read_temp(self):
-        self._bus.write_byte_data(BARO, 0xF4, 0x2E)
+        self._gpiod.i2c_write_byte(self._bus, 0xF4, 0x2E)
         time.sleep(0.045)
-        sample = bytes(self._bus.read_i2c_block_data(BARO, 0xF6, 2))
+        sample = bytes(self._gpiod.i2c_read_i2c_block_data(self._bus, 0xF6, 2))
         #print('sample {:x}{:x}'.format(sample[0],sample[1]))
         self._raw_temp = struct.unpack('>h', sample)[0]
         #print("raw temp:{}".format(self._raw_temp))

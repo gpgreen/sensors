@@ -6,34 +6,37 @@
 import time
 
 # raspberry pi imports
-import spidev
+import pigpio
 
 class LM35:
 
     def __init__(self, channel, bus, device):
         if not 0 <= channel < 6:
             raise ValueError('channel must be in range: 0-5')
-        self._spi = spidev.SpiDev()
+        self._gpiod = pigpio.pi()
         self._spi_bus = bus
+        if bus != 0:
+            raise ValueError("SPI bus 1 not implemented yet")
         self._spi_dev = device
         self._channel = channel
+        self._spi_handle = None
         self._raw = 0
         self._temp = 0
         print("LM35 Temperature sensor initialized on channel {}".format(self._channel))
 
     def open(self):
-        self._spi.open(self._spi_bus, self._spi_dev)
+        self._spi_handle = self._gpiod.spi_open(self._spi_dev, 100000, 0)
         time.sleep(0.00002)
         # specify which channel to get
-        self._spi_write([0x1, 0x3, 0x00])
-        print("channels:", self._spi_write([0x2, 0x0, 0x0])[0])
+        self._gpiod.spi_write(self._spi_handle, [0x1, 0x1, 0x00])
+        print("channels:", self._gpiod.spi_write(self._spi_handle, [0x2, 0x0, 0x0])[0])
 
     def close(self):
-        self._spi.close()
+        self._gpiod.spi_stop()
 
     def read_sensor(self):
-        self._spi_write([0x2, 0, 0])
-        res = self._spi_write(self._send())
+        self._gpiod.spi_write(self._spi_handle, [0x2, 0, 0])
+        res = self._gpiod.spi_xfer(self._spi_handle, self._send())
         self._raw = res[0] + (res[1] << 8)
         self._temp = self._raw * 1.8 / 1024.0 * 100
         #print("raw:", res[0], res[1])
@@ -55,5 +58,5 @@ class LM35:
         return nmea_sentence
 
     def _spi_write(self, data):
-        self._spi.xfer(data[:1], 100000, 50)
-        return self._spi.xfer(data[1:], 100000, 10)
+        self._gpiod.spi_xfer(self._spi_handle, data[:1], 100000, 50)
+        return self._gpiod.spi_xfer(self._spi_handle, data[1:], 100000, 10)
