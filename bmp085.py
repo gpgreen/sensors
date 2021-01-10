@@ -5,6 +5,7 @@ import struct
 
 # raspberry pi imports
 import smbus
+from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero import DigitalOutputDevice, DigitalInputDevice
 
 # i2c address
@@ -28,11 +29,12 @@ class BMP085Device:
     """ BMP085 barometric pressure sensor device. """
 
     def __init__(self, busno, xclr_pin, eoc_pin):
+        factory = PiGPIOFactory()
         # XCLR is active low to reset the device
-        self._xclr = DigitalOutputDevice(xclr_pin, active_high=False)
+        self._xclr = DigitalOutputDevice(xclr_pin, active_high=False, pin_factory=factory)
         self.reset()
         # EOC is active high, if calculation is done
-        self._eoc = DigitalInputDevice(eoc_pin, pull_up=False)
+        self._eoc = DigitalInputDevice(eoc_pin, pull_up=False, pin_factory=factory)
         self._bus = smbus.SMBus(busno)
         self._oversampling = 2
         self._raw_temp = 0

@@ -1,6 +1,6 @@
 [Unit]
 Description=daemon for weather sensors
-After=network.target
+After=network.target pigpiod.service
 
 [Service]
 Type=simple
