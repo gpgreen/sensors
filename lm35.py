@@ -33,7 +33,7 @@ class LM35:
         print("channels:", self._spi_write([0x2, 0x0, 0x0])[0])
 
     def close(self):
-        self._gpiod.spi_stop()
+        self._gpiod.spi_close(self._spi_handle)
 
     def read_sensor(self):
         self._spi_write([0x2, 0, 0])
@@ -66,5 +66,5 @@ class LM35:
         self._gpiod.write(self._button, 1)
         self._gpiod.set_mode(self._button, pigpio.INPUT)
         # now write to the dev
-        self._gpiod.spi_xfer(self._spi_handle, data[:1], 100000, 50)
-        return self._gpiod.spi_xfer(self._spi_handle, data[1:], 100000, 10)
+        self._gpiod.spi_xfer(self._spi_handle, data[:1])
+        return self._gpiod.spi_xfer(self._spi_handle, data[1:])
