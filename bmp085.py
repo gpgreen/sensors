@@ -53,7 +53,7 @@ class BMP085Device:
         al_version = (version_id & 0xF0) >> 4
         print("Version:{}.{}".format(ml_version, al_version))
         # read calibration parameter information
-        data = bytes(self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xaa, 22))
+        data = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xaa, 22)[1]
         self._calib = list(struct.unpack('>hhhHHHhhhhh', data))
         self._calib.append(0)
         print('Calibration parameters')
@@ -103,7 +103,7 @@ class BMP085Device:
             time.sleep(0.018)
         else:
             time.sleep(0.026)
-        sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 3)
+        sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 3)[1]
         #print('sample {:x}{:x}{:x}'.format(sample[0],sample[1],sample[2]))
         self._raw_values[1] = ((sample[0] << 16) + (sample[1] << 8) + sample[2]) \
             >> (8 - self._oversampling)
@@ -111,7 +111,7 @@ class BMP085Device:
     def read_temp(self):
         self._gpiod.i2c_write_byte(self._i2c_handle, 0xF4, 0x2E)
         time.sleep(0.045)
-        sample = bytes(self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 2))
+        sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 2)[1]
         #print('sample {:x}{:x}'.format(sample[0],sample[1]))
         self._raw_values[0] = struct.unpack('>h', sample)[0]
 
