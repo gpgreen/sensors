@@ -3,6 +3,7 @@
     "udp_host": "127.0.0.1",
     "udp_port": 49898,
     "sleep_interval": 5,
+    "button_pin": 27,
     "lm35_bus": 0,
     "lm35_device": 0,
     "lm35_channel": 0,
