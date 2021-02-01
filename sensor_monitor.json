@@ -4,9 +4,8 @@
     "udp_port": 49898,
     "sleep_interval": 5,
     "button_pin": 27,
-    "lm35_bus": 0,
-    "lm35_device": 0,
-    "lm35_channel": 0,
+    "hat_bus": 0,
+    "hat_device": 0,
     "bmp085_i2c_bus": 1,
     "bmp085_xclr_pin": 18,
     "bmp085_eoc_pin": 4

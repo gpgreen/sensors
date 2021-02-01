@@ -16,7 +16,7 @@ import json
 import os
 
 import pigpio
-import lm35
+import ChartPlotterHatADC
 import bmp085
 
 def read_config_file(fname):
@@ -51,12 +51,11 @@ def main():
     my_pi = pigpio.pi()
 
     try:
-        tempdev = lm35.LM35(my_pi,
-                            int(config['lm35_channel']),
-                            int(config['lm35_bus']),
-                            int(config['lm35_device']),
-                            int(config['button_pin']))
-        tempdev.open()
+        hatdev = ChartPlotterHatADC.ChartPlotterHatADC(my_pi,
+                                                       int(config['hat_bus']),
+                                                       int(config['hat_device']),
+                                                       int(config['button_pin']))
+        hatdev.open()
         barodev = bmp085.BMP085Device(my_pi,
                                       int(config['bmp085_i2c_bus']),
                                       int(config['bmp085_xclr_pin']),
@@ -64,16 +63,17 @@ def main():
 
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             while True:
-                tempdev.read_sensor()
+                hatdev.read_lm35()
+                hatdev.read_thermistor()
                 barodev.read_sensor()
-                sock.sendto(tempdev.create_nmea0183_sentence(talker_id).encode(),
+                sock.sendto(hatdev.create_nmea0183_sentence(talker_id).encode(),
                             (udp_host, udp_port))
                 sock.sendto(barodev.create_nmea0183_sentence(talker_id).encode(),
                             (udp_host, udp_port))
                 time.sleep(sleepy)
 
     finally:
-        tempdev.close()
+        hatdev.close()
         barodev.close()
         my_pi.stop()
 
