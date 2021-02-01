@@ -61,7 +61,7 @@ class BMP085Device:
         print('\tac4:{} ac5:{} ac6:{}'.format(self._calib[AC4], self._calib[AC5], self._calib[AC6]))
         print('\tb1:{} b2:{}'.format(self._calib[B1], self._calib[B2]))
         print('\tmb:{} mc:{} md:{}'.format(self._calib[MB], self._calib[MC], self._calib[MD]))
-        self._raw_values = []
+        self._raw_values = [0, 0]
         
     def close(self):
         """ release the pigpio resources """
@@ -94,7 +94,7 @@ class BMP085Device:
         return nmea_sentence
 
     def read_press(self):
-        self._gpiod.i2c_write_byte(self._i2c_handle, 0xF4, 0x34 + (self._oversampling<<6))
+        self._gpiod.i2c_write_byte_data(self._i2c_handle, 0xF4, 0x34 + (self._oversampling<<6))
         if self._oversampling == 0:
             time.sleep(0.002)
         elif self._oversampling == 1:
@@ -109,7 +109,7 @@ class BMP085Device:
             >> (8 - self._oversampling)
 
     def read_temp(self):
-        self._gpiod.i2c_write_byte(self._i2c_handle, 0xF4, 0x2E)
+        self._gpiod.i2c_write_byte_data(self._i2c_handle, 0xF4, 0x2E)
         time.sleep(0.045)
         sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 2)[1]
         #print('sample {:x}{:x}'.format(sample[0],sample[1]))

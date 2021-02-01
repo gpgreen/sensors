@@ -39,7 +39,7 @@ class LM35:
         self._spi_write([0x2, 0, 0])
         res = self._spi_write(self._send())
         raw = res[0] + (res[1] << 8)
-        self._temp = raw * 1.8 / 1024.0 * 100
+        self._temp = raw * 3.3 / 1023.0 * 100
         #print("raw:", res[0], res[1])
 
     def _send(self):
@@ -67,4 +67,5 @@ class LM35:
         self._gpiod.set_mode(self._button, pigpio.INPUT)
         # now write to the dev
         self._gpiod.spi_xfer(self._spi_handle, data[:1])
-        return self._gpiod.spi_xfer(self._spi_handle, data[1:])
+        time.sleep(0.00005)
+        return self._gpiod.spi_xfer(self._spi_handle, data[1:])[1]
