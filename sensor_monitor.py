@@ -28,8 +28,8 @@ class LM35:
     def adc_reading(self, adc_value):
         if adc_value == 0:
             return
-        self._temp = adc_value * 3.3 / 1023.0 * 100
-        print("lm35 temp:", self._temp)
+        self._temp = adc_value * 3300 / 1024.0 / 10.0
+        #print("lm35 temp:", self._temp)
 
     def create_nmea0183_sentence(self, talker_id):
         nmea_sentence = '{}MTA,{:.1f},C'.format(talker_id, self._temp)
@@ -50,17 +50,17 @@ class Thermistor:
         if adc_value == 0:
             return
         resistance = 10000 / (1023.0 / adc_value - 1.0)
-        print("resistance:", resistance)
+        #print("resistance:", resistance)
         steinhart = resistance / 10000.0
         steinhart = math.log(steinhart)
         steinhart = steinhart / 3950.0
         steinhart += 1.0 / (25 + 273.15)
         steinhart = 1.0 / steinhart
         self._steinhart = steinhart - 273.15
-        print("steinhart:", self._steinhart)
+        #print("steinhart:", self._steinhart)
 
     def create_nmea0183_sentence(self, talker_id):
-        nmea_sentence = '{}MTA,{:.1f},C'.format(talker_id, self._steinhart)
+        nmea_sentence = '{}MTW,{:.1f},C'.format(talker_id, self._steinhart)
         # compute checksum
         checksum_value = 0
         for nmea_ch in nmea_sentence:
@@ -119,6 +119,8 @@ def main():
                 thermistor.adc_reading(hatdev.read_adc_channel(1))
                 barodev.read_sensor()
                 sock.sendto(lm35.create_nmea0183_sentence(talker_id).encode(),
+                            (udp_host, udp_port))
+                sock.sendto(thermistor.create_nmea0183_sentence(talker_id).encode(),
                             (udp_host, udp_port))
                 sock.sendto(barodev.create_nmea0183_sentence(talker_id).encode(),
                             (udp_host, udp_port))
