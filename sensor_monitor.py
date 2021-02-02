@@ -26,6 +26,8 @@ class LM35:
         self._temp = 0
 
     def adc_reading(self, adc_value):
+        if adc_value == 0:
+            return
         self._temp = adc_value * 3.3 / 1023.0 * 100
         print("lm35 temp:", self._temp)
 
@@ -45,9 +47,13 @@ class Thermistor:
         self._steinhart = 0
 
     def adc_reading(self, adc_value):
-        resistance = 10000 / (1023.0/adc_value-1.0)
-        steinhart = resistance/10000.0
+        if adc_value == 0:
+            return
+        resistance = 10000 / (1023.0 / adc_value - 1.0)
+        print("resistance:", resistance)
+        steinhart = resistance / 10000.0
         steinhart = math.log(steinhart)
+        steinhart = steinhart / 3950.0
         steinhart += 1.0 / (25 + 273.15)
         steinhart = 1.0 / steinhart
         self._steinhart = steinhart - 273.15
