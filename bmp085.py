@@ -104,7 +104,7 @@ class BMP085Device:
         else:
             time.sleep(0.026)
         sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 3)[1]
-        #print('sample {:x}{:x}{:x}'.format(sample[0],sample[1],sample[2]))
+        #print('p sample {:x}{:x}{:x}'.format(sample[0],sample[1],sample[2]))
         self._raw_values[1] = ((sample[0] << 16) + (sample[1] << 8) + sample[2]) \
             >> (8 - self._oversampling)
 
@@ -112,8 +112,8 @@ class BMP085Device:
         self._gpiod.i2c_write_byte_data(self._i2c_handle, 0xF4, 0x2E)
         time.sleep(0.045)
         sample = self._gpiod.i2c_read_i2c_block_data(self._i2c_handle, 0xF6, 2)[1]
-        #print('sample {:x}{:x}'.format(sample[0],sample[1]))
-        self._raw_values[0] = struct.unpack('>h', sample)[0]
+        #print('t sample {:x}{:x}'.format(sample[0],sample[1]))
+        self._raw_values[0] = struct.unpack('>H', sample)[0]
 
     def calc_temp(self):
         # pylint: disable=C0103
@@ -161,6 +161,7 @@ class BMP085Device:
         x2 = (p * -7357) >> 16
         #print('x2',x2)
         p += (x1 + x2 + 3791) >> 4
+        #print('press',p)
         return p
 
     def do_fake(self):
