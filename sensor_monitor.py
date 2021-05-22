@@ -127,8 +127,10 @@ def main():
                 time.sleep(sleepy)
 
     finally:
-        hatdev.close()
-        barodev.close()
+        if hatdev:
+            hatdev.close()
+        if barodev:
+            barodev.close()
         my_pi.stop()
 
 if __name__ == '__main__':
