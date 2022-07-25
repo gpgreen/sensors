@@ -1,12 +1,13 @@
 # read data from a BME680 environmental sensor
+# assuming device is on linux as a iio driver
 
 from pathlib import Path
 
-IIO_PATH = Path("/sys/bus/ii0/devices")
+IIO_PATH = Path("/sys/bus/iio/devices")
 
 class BME680:
     # device name
-    device_name = b"bme680"
+    device_name = b'bme680'
 
     def __init__(self):
         """Environmental IIO sensor. Temp, Press, Humidity, and VOC air quality"""
@@ -23,14 +24,14 @@ class BME680:
                 continue
             # find the name entry, looking to find the bme device
             for dev_entry in devdir.iterdir():
-                if dev_entry == 'name':
-                    dev_name = dev_entry.read_bytes()
-                    if dev_name == BME680.device_name:
+                if dev_entry.name == r'name':
+                    dev_name = dev_entry.read_bytes().strip(b'\n')
+                    if dev_name.find(BME680.device_name) >= 0:
                         self._device_path = devdir
                         break
             if self._device_path is not None:
                 break
-        if self._device_path is None:
+        else:
             raise OSError("no matching bme680 device on iio bus")
         self.init_channels()
 
@@ -43,7 +44,13 @@ class BME680:
 
     def read_resistance(self):
         """ read voc resistance """
-        val = self._resistance_ch.read_bytes()
+        while True:
+            try:
+                val = self._resistance_ch.read_bytes()
+                break
+            except OSError as e:
+                if e.errno == 22:
+                    continue
         self._resistance = float(val)
 
     def read_temperature(self):
