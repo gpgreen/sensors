@@ -87,7 +87,7 @@ class BME680:
     def create_nmea0183_sentence(self, talker_id):
         """ create a nmea0183 sentence with a given talker_id """
         nmea_sentence = '{}MDA,,I,{:.1f},B,{:.1f},C,,C,{:.1f},,,C,,T,,M,,N,,M'.format(
-            talker_id, self.press, self._temp, self._humidity)
+            talker_id, self._press, self._temp, self._humidity)
         # compute checksum
         checksum_value = 0
         for nmea_ch in nmea_sentence:
