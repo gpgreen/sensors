@@ -18,7 +18,7 @@ from pathlib import Path
 import bme680
 
 def read_config_file(fconfig):
-    return json.load(fconfig.read_text())
+    return json.loads(fconfig.read_text())
 
 def main():
     # get environment variable with config file path
@@ -46,6 +46,8 @@ def main():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         while True:
             bmedev.read_temperature()
+            bmedev.read_humidity()
+            bmedev.read_pressure()
             sock.sendto(bmedev.create_nmea0183_sentence(talker_id).encode(),
                         (udp_host, udp_port))
             time.sleep(sleepy)

@@ -9,6 +9,11 @@ class BME680:
     # device name
     device_name = b'bme680'
 
+    temperature = 0
+    pressure = 1
+    humidity = 2
+    resistance = 3
+
     def __init__(self):
         """Environmental IIO sensor. Temp, Press, Humidity, and VOC air quality"""
         if not IIO_PATH.exists():
@@ -42,35 +47,47 @@ class BME680:
         self._humidity_ch = self._device_path / "in_humidityrelative_input"
         self._pressure_ch = self._device_path / "in_pressure_input"
 
-    def read_resistance(self):
+    def read_channel(self, ch):
         """ read voc resistance """
+        val = 0.0
         while True:
+            chptr = None
+            if ch == BME680.temperature:
+                chptr = self._temperature_ch
+            elif ch == BME680.pressure:
+                chptr = self._pressure_ch
+            elif ch == BME680.humidity:
+                chptr = self._pressure_ch
+            else:
+                chptr = self._resistance_ch
             try:
-                val = self._resistance_ch.read_bytes()
+                val = chptr.read_bytes()
                 break
             except OSError as e:
                 if e.errno == 22:
                     continue
-        self._resistance = float(val)
+                raise e
+        return float(val)
+
+    def read_resistance(self):
+        self.resistance = self.read_channel(BME680.resistance)
 
     def read_temperature(self):
         """ read temperature """
-        val = self._temperature_ch.read_bytes()
-        self._temp = float(val) / 1000.0
+        self._temp = self.read_channel(BME680.temperature) / 1000.0
 
     def read_pressure(self):
         """ read pressure """
-        val = self._pressure_ch.read_bytes()
-        self._press = float(val)
+        self._press = self.read_channel(BME680.pressure)
 
     def read_humidity(self):
         """ read relative humidity """
-        val = self._humidity_ch.read_bytes()
-        self._humidity = float(val)
+        self._humidity = self.read_channel(BME680.humidity)
 
     def create_nmea0183_sentence(self, talker_id):
         """ create a nmea0183 sentence with a given talker_id """
-        nmea_sentence = '{}MTA,{:.1f},C'.format(talker_id, self._temp)
+        nmea_sentence = '{}MDA,,I,{:.1f},B,{:.1f},C,,C,{:.1f},,,C,,T,,M,,N,,M'.format(
+            talker_id, self.press, self._temp, self._humidity)
         # compute checksum
         checksum_value = 0
         for nmea_ch in nmea_sentence:

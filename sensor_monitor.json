@@ -3,7 +3,6 @@
     "udp_host": "127.0.0.1",
     "udp_port": 49898,
     "sleep_interval": 5,
-    "button_pin": 27,
     "hat_bus": 0,
     "hat_device": 0,
     "bmp085_i2c_bus": 1,

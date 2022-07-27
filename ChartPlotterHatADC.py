@@ -11,7 +11,7 @@ import pigpio
 class ChartPlotterHatADC:
     """ Read ADC channels from chart plotter hat"""
 
-    def __init__(self, my_pi, bus, device, button):
+    def __init__(self, my_pi, bus, device):
         self._gpiod = my_pi
         self._spi_bus = bus
         if bus != 0:
@@ -20,7 +20,6 @@ class ChartPlotterHatADC:
         if device < 0 or device > 1:
             raise ValueError("Illegal channel:{}".format(device))
         self._spi_handle = None
-        self._button = button
         print("ChartPlotterHat initialized on SPI bus {} channel {}".format(
             self._spi_bus, self._spi_dev))
 
@@ -45,13 +44,6 @@ class ChartPlotterHatADC:
         return raw
 
     def _spi_write(self, data):
-        # pulse button pin, to wake up device
-        self._gpiod.set_mode(self._button, pigpio.OUTPUT)
-        self._gpiod.write(self._button, 0)
-        time.sleep(0.000005)
-        self._gpiod.write(self._button, 1)
-        self._gpiod.set_mode(self._button, pigpio.INPUT)
-        time.sleep(0.0001)
         self._gpiod.write(8, 0)
         time.sleep(0.00005)
         # now write to the dev
