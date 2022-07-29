@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import bme680
+from sensordb import SensorDB
 
 def read_config_file(fconfig):
     return json.loads(fconfig.read_text())
@@ -43,14 +44,19 @@ def main():
     print("NMEA0183 Talker ID:", talker_id)
 
     bmedev = bme680.BME680()
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        while True:
-            bmedev.read_temperature()
-            bmedev.read_humidity()
-            bmedev.read_pressure()
-            sock.sendto(bmedev.create_nmea0183_sentence(talker_id).encode(),
-                        (udp_host, udp_port))
-            time.sleep(sleepy)
+
+    # setup the db
+    #sdb = SensorDB(config['db_file'], bmedev.table_names())
+    with SensorDB(config['db_file'], bmedev.table_names()) as sdb:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            while True:
+                bmedev.read_temperature()
+                bmedev.read_humidity()
+                bmedev.read_pressure()
+                sock.sendto(bmedev.create_nmea0183_sentence(talker_id).encode(),
+                            (udp_host, udp_port))
+                bmedev.insert_all(sdb)
+                time.sleep(sleepy)
 
 if __name__ == '__main__':
     main()

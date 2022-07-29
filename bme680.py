@@ -1,6 +1,7 @@
 # read data from a BME680 environmental sensor
 # assuming device is on linux as a iio driver
 
+import time
 from pathlib import Path
 
 IIO_PATH = Path("/sys/bus/iio/devices")
@@ -9,10 +10,10 @@ class BME680:
     # device name
     device_name = b'bme680'
 
-    temperature = 0
-    pressure = 1
-    humidity = 2
-    resistance = 3
+    temperature = (0, 'bme680temperature')
+    pressure = (1, 'bme680pressure')
+    humidity = (2, 'bme680humidity')
+    resistance = (3, 'bme680resistance')
 
     def __init__(self):
         """Environmental IIO sensor. Temp, Press, Humidity, and VOC air quality"""
@@ -52,11 +53,11 @@ class BME680:
         val = 0.0
         while True:
             chptr = None
-            if ch == BME680.temperature:
+            if ch == BME680.temperature[0]:
                 chptr = self._temperature_ch
-            elif ch == BME680.pressure:
+            elif ch == BME680.pressure[0]:
                 chptr = self._pressure_ch
-            elif ch == BME680.humidity:
+            elif ch == BME680.humidity[0]:
                 chptr = self._pressure_ch
             else:
                 chptr = self._resistance_ch
@@ -70,19 +71,19 @@ class BME680:
         return float(val)
 
     def read_resistance(self):
-        self.resistance = self.read_channel(BME680.resistance)
+        self.resistance = self.read_channel(BME680.resistance[0])
 
     def read_temperature(self):
         """ read temperature """
-        self._temp = self.read_channel(BME680.temperature) / 1000.0
+        self._temp = self.read_channel(BME680.temperature[0]) / 1000.0
 
     def read_pressure(self):
         """ read pressure """
-        self._press = self.read_channel(BME680.pressure)
+        self._press = self.read_channel(BME680.pressure[0])
 
     def read_humidity(self):
         """ read relative humidity """
-        self._humidity = self.read_channel(BME680.humidity)
+        self._humidity = self.read_channel(BME680.humidity[0])
 
     def create_nmea0183_sentence(self, talker_id):
         """ create a nmea0183 sentence with a given talker_id """
@@ -95,3 +96,21 @@ class BME680:
         nmea_sentence = '${}*{:02x}\r\n'.format(nmea_sentence, checksum_value)
         #print(nmea_sentence[:-2])
         return nmea_sentence
+
+    def table_names(self):
+        tblnames = [
+            BME680.temperature[1],
+            BME680.pressure[1],
+            BME680.humidity[1],
+            BME680.resistance[1],
+        ]
+        return tblnames
+
+    def insert_all(self, dbconn):
+        ts = time.time_ns()
+        t = ts / 1000000.0
+        print("bme680 t:", time.gmtime(t*1000))
+        dbconn.insert_data(BME680.resistance[1], t, self.resistance)
+        dbconn.insert_data(BME680.temperature[1], t, self._temp)
+        dbconn.insert_data(BME680.humidity[1], t, self._humidity)
+        dbconn.insert_data(BME680.pressure[1], t, self._press)

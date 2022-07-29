@@ -7,5 +7,6 @@
     "hat_device": 0,
     "bmp085_i2c_bus": 1,
     "bmp085_xclr_pin": 18,
-    "bmp085_eoc_pin": 4
+    "bmp085_eoc_pin": 4,
+    "db_file": "data/sensor_data.db"
 }
