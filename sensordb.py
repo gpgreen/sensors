@@ -106,6 +106,6 @@ class SensorDB(object):
     def insert_data(self, table_name, timestamp, val):
         cur = self._conn.cursor()
         sql = TABLE_INSERT_TEMPLATE.format(table_name)
-        print("tbl: {} timestamp: {} val: {}".format(table_name, timestamp, val))
-        cur.executemany(sql, [(timestamp, val),])
+        #print("tbl: {} timestamp: {} val: {}".format(table_name, timestamp, val))
+        cur.execute(sql, (timestamp, val))
         self._conn.commit()
