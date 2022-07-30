@@ -1,8 +1,8 @@
 # read data from a BME680 environmental sensor
 # assuming device is on linux as a iio driver
 
-import time
 from pathlib import Path
+import sensordb
 
 IIO_PATH = Path("/sys/bus/iio/devices")
 
@@ -108,7 +108,7 @@ class BME680:
 
     def insert_all(self, dbconn):
         # get time in milliseconds, discard the rest
-        t = int(time.time_ns() / 1000000.0)
+        t = sensordb.timestamp()
         dbconn.insert_data(BME680.resistance[1], t, self._resistance)
         dbconn.insert_data(BME680.temperature[1], t, self._temp)
         dbconn.insert_data(BME680.humidity[1], t, self._humidity)
