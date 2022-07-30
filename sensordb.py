@@ -21,7 +21,6 @@ def timestamp():
     """ get the time in milliseconds since epoch """
     ts = time.time_ns()
     t = ts / 1000000000.0
-    print("timestamp: {}", time.gmtime(t))
     return ts / 1000000.0
 
 class SensorDB(object):
@@ -39,18 +38,8 @@ class SensorDB(object):
         return self
 
     def __exit__(self, ty, val, tb):
+        self._conn.close()
         return False
-
-    # @contextmanager
-    # def connection(self):
-    #     """ create a database connection to a SQLite database """
-    #     try:
-    #         self._conn = sqlite3.connect(self._fname)
-    #         print("sqlite3 version:", sqlite3.version)
-    #         self.create_tables(self._table_names)
-    #         yield self._conn
-    #     finally:
-    #         self._conn.close()
 
     def create_tables(self, table_names):
         """ create tables needed for ingesting data """
@@ -62,16 +51,20 @@ class SensorDB(object):
                     sql = VER_TABLE_TEMPLATE
                 else:
                     sql = TABLE_TEMPLATE.format(table)
-                print("sql:'{}'".format(sql))
+                #print("sql:'{}'".format(sql))
                 cur.execute(sql)
                 print("{} table created".format(table))
 
-            cur.executemany(VERSION_INSERT_TEMPLATE, [
-                (timestamp(), SensorDB.data_version),])
+            cur.execute(VERSION_INSERT_TEMPLATE, (timestamp(), SensorDB.data_version))
+            self._conn.commit()
+            cur.execute('select * from version')
+            print(cur.fetchall())
         finally:
             cur = None
 
     def insert_data(self, table_name, timestamp, val):
         cur = self._conn.cursor()
         sql = TABLE_INSERT_TEMPLATE.format(table_name)
+        print("tbl: {} timestamp: {} val: {}".format(table_name, timestamp, val))
         cur.executemany(sql, [(timestamp, val),])
+        self._conn.commit()

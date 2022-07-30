@@ -46,10 +46,10 @@ def main():
     bmedev = bme680.BME680()
 
     # setup the db
-    #sdb = SensorDB(config['db_file'], bmedev.table_names())
     with SensorDB(config['db_file'], bmedev.table_names()) as sdb:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             while True:
+                bmedev.read_resistance()
                 bmedev.read_temperature()
                 bmedev.read_humidity()
                 bmedev.read_pressure()

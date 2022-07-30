@@ -58,7 +58,7 @@ class BME680:
             elif ch == BME680.pressure[0]:
                 chptr = self._pressure_ch
             elif ch == BME680.humidity[0]:
-                chptr = self._pressure_ch
+                chptr = self._humidity_ch
             else:
                 chptr = self._resistance_ch
             try:
@@ -71,7 +71,7 @@ class BME680:
         return float(val)
 
     def read_resistance(self):
-        self.resistance = self.read_channel(BME680.resistance[0])
+        self._resistance = self.read_channel(BME680.resistance[0])
 
     def read_temperature(self):
         """ read temperature """
@@ -107,10 +107,9 @@ class BME680:
         return tblnames
 
     def insert_all(self, dbconn):
-        ts = time.time_ns()
-        t = ts / 1000000.0
-        print("bme680 t:", time.gmtime(t*1000))
-        dbconn.insert_data(BME680.resistance[1], t, self.resistance)
+        # get time in milliseconds, discard the rest
+        t = int(time.time_ns() / 1000000.0)
+        dbconn.insert_data(BME680.resistance[1], t, self._resistance)
         dbconn.insert_data(BME680.temperature[1], t, self._temp)
         dbconn.insert_data(BME680.humidity[1], t, self._humidity)
         dbconn.insert_data(BME680.pressure[1], t, self._press)
