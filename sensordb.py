@@ -4,11 +4,13 @@ from sqlite3 import Error
 from contextlib import contextmanager
 
 VER_TABLE_TEMPLATE = """CREATE TABLE IF NOT EXISTS version (
-    timestamp INTEGER PRIMARY KEY,
+    timestamp INTEGER NOT NULL,
     version INTEGER NOT NULL
-) WITHOUT ROWID"""
+)"""
 
 VERSION_INSERT_TEMPLATE = """INSERT INTO version values (?, ?)"""
+
+VERSION_VERSION_QUERY_TEMPLATE = """SELECT * FROM version WHERE version=?"""
 
 RUN_TABLE_TEMPLATE = """CREATE TABLE IF NOT EXISTS run (
     start INTEGER NOT NULL,
@@ -30,7 +32,7 @@ TABLE_INSERT_TEMPLATE = """INSERT INTO {} values (?, ?)"""
 
 def timestamp():
     """ get the time in milliseconds since epoch """
-    return time.time_ns() / 1000000.0
+    return int(time.time_ns() / 1000000.0)
 
 class SensorDB(object):
     data_version = 1
@@ -53,13 +55,26 @@ class SensorDB(object):
         self._conn.close()
         return False
 
+    def set_version(self):
+        cur = self._conn.cursor()
+        cur.execute(VERSION_VERSION_QUERY_TEMPLATE, (SensorDB.data_version,))
+        result = cur.fetchall()
+        if len(result) == 0:
+            cur.execute(VERSION_INSERT_TEMPLATE, (timestamp(), SensorDB.data_version))
+            result = [[-1,SensorDB.data_version],]
+            self._conn.commit()
+        elif len(result) != 1:
+            raise RuntimeError("should not have multiple versions in version table")
+        print("sensordb data version is: {}".format(result[0][1]))
+
     def start_run(self):
         t = timestamp()
         cur = self._conn.cursor()
         cur.execute(RUN_INSERT_TEMPLATE, (t, -1))
         self._conn.commit()
-        cur.execute(RUN_LAST_QUERY_TEMPLATE, t)
+        cur.execute(RUN_LAST_QUERY_TEMPLATE, (t,))
         self._run_rowid = cur.fetchone()[0]
+        print("last runid:", self._run_rowid)
 
     def end_run(self):
         cur = self._conn.cursor()
@@ -67,10 +82,10 @@ class SensorDB(object):
         self._conn.commit()
         self._run_rowid = -1
 
-    def create_tables(self, table_names):
+    def create_tables(self, sensor_table_names):
         """ create tables needed for ingesting data """
-        table_names.append('version')
-        table_names.append('run')
+        table_names = ['version', 'run']
+        table_names.extend(sensor_table_names)
         try:
             cur = self._conn.cursor()
             for table in table_names:
@@ -82,12 +97,9 @@ class SensorDB(object):
                     sql = TABLE_TEMPLATE.format(table)
                 #print("sql:'{}'".format(sql))
                 cur.execute(sql)
-                print("{} table created".format(table))
-
-            cur.execute(VERSION_INSERT_TEMPLATE, (timestamp(), SensorDB.data_version))
+                #print("{} table created".format(table))
             self._conn.commit()
-            cur.execute('select * from version')
-            print(cur.fetchall())
+            self.set_version()
         finally:
             cur = None
 
